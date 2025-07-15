@@ -1,11 +1,12 @@
 import customtkinter as ctk
 from PIL import Image
-from .buttons import NavigationButton
+from .buttons import NavigationButton, TrackButton
+from ..database import get_playlist
 import os
 
 ctk.set_default_color_theme("green")
 
-img_path = os.path.abspath(__file__+'/../../../img') 
+img_path = os.path.abspath(__file__+'/../../../assets/img') 
 
 class MelodyPlayer(ctk.CTk):
     def __init__(self, name, width, height):
@@ -13,6 +14,9 @@ class MelodyPlayer(ctk.CTk):
         self.title(name)
         self.geometry(f'{width}x{height}')
         self.resizable(False, False)
+
+        self.playlist = get_playlist()
+
         # Основна панель
         self.main_panel = ctk.CTkFrame(self, fg_color="#1e1e1e")
         self.main_panel.pack(side="left", fill='both', expand=True)
@@ -35,7 +39,7 @@ class MelodyPlayer(ctk.CTk):
 
         # Прогрес-бар
         self.progress_frame = ctk.CTkFrame(self.control_container, fg_color="#1e1e1e")
-        self.progress_frame.grid(row=0, column=0, pady=(0, 20))
+        self.progress_frame.grid(row=0, column=0, pady=(0, 30))
 
         self.current_time = ctk.CTkLabel(self.progress_frame, text="00:00")
         self.current_time.grid(row=0, column=0, sticky="w")
@@ -82,16 +86,25 @@ class MelodyPlayer(ctk.CTk):
         self.scrollable_song_list = ctk.CTkScrollableFrame(self.side_panel, fg_color="#2b2b2b")
         self.scrollable_song_list.grid(row=2, column=0, columnspan=2, pady=(20, 0), sticky="nsew")
 
-        for i in range(10):
-            self.btn = ctk.CTkButton(self.scrollable_song_list, text="Beatles Yesterday", hover_color="#55d88c", command=self.show_navigation_frame)
+        for song in get_playlist():
+            self.btn = TrackButton(self.scrollable_song_list, text=f"{song.artist} - {song.title}", hover_color="#55d88c", command= lambda duration=song.duration, text = f"{song.artist} - {song.title}": self.show_navigation_frame(text, duration))
             self.btn.pack(pady=10)
 
-    def show_navigation_frame(self):
+    def show_navigation_frame(self, text, duration):
         self.info_label.grid_configure(sticky="s")
+        self.info_label.configure(text=text)
+        self.total_time.configure(text=format_duration_long(duration))
         self.navigation_frame.grid(row=1, column=0, sticky="sew", padx=(90,20))
 
 
 
 app = MelodyPlayer(name="MelodyPlayer", width=900, height=400)        
+
+
+def format_duration_long(duration):
+    total = int(duration)
+    minutes = total // 60
+    seconds = total % 60
+    return f"{minutes:02}:{seconds:02}"
 
 
