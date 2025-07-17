@@ -40,8 +40,7 @@ class ProgressFrame(ctk.CTkFrame):
             ms = self.audio_player.get_track_position()  # мілісекунди
             self.track_time = ms // 1000 + 1
             self.set_time(current_time=self.format_duration(self.track_time), progress_value=self.track_time/duration)
-            after_id = self.after(1000, self.update_progress_bar)
-            return after_id
+
 
 class NavigationButtonsFrame(ctk.CTkFrame):
     def __init__(self, master, fg_color, prev_command, pause_command, resume_command, next_command, **kwargs):

@@ -84,7 +84,7 @@ class MelodyPlayer(ctk.CTk):
             self.after_cancel(self.after_id)
         # Налаштування прогрес_бару
         self.progress_frame.track_time = 0
-        self.after_id = self.progress_frame.update_progress_bar()
+        self.create_after
 
     def turn_next_track(self):
         self.playlist["current_track"] += 1
@@ -99,7 +99,11 @@ class MelodyPlayer(ctk.CTk):
         self.audio_player.resume()
         if self.after_id:
             self.after_cancel(self.after_id)
-        self.after_id = self.progress_frame.update_progress_bar()
+        self.create_after
+
+    def create_after(self):
+        self.progress_frame.update_progress_bar()
+        self.after_id = self.after(1000, self.create_after)
 
     def filter_tracks(self):
         # Налаштували дизайн
