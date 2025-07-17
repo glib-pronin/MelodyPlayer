@@ -1,4 +1,5 @@
 import pygame.mixer as mixer
+import os
 
 class AudioPlayer:
     def __init__(self):
@@ -6,7 +7,8 @@ class AudioPlayer:
 
     def play_track(self, filepath):
         self.stop()
-        mixer.music.load(filepath)
+        mixer.music.load(AudioPlayer.create_abs_music_path(filepath))
+        print(filepath)
         mixer.music.play()
 
     def pause(self):
@@ -26,3 +28,7 @@ class AudioPlayer:
     
     def is_track_busy(self):
         return mixer.music.get_busy()
+    
+    @staticmethod
+    def create_abs_music_path(path):
+        return os.path.abspath(__file__+f"/../../{path}")

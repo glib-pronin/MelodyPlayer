@@ -1,14 +1,10 @@
 import customtkinter as ctk
-from PIL import Image
-from .buttons import NavigationButton, TrackButton
 from .entries import FilterEntry
+from .frames import NavigationButtonsFrame, ScrollableTrackListFrame, ProgressFrame
 from ..database import get_playlist
 from ..audio_player import AudioPlayer
-import os
 
 ctk.set_default_color_theme("green")
-
-img_path = os.path.abspath(__file__+'/../../../assets/img') # Шлях до папки з малюнками
 
 class MelodyPlayer(ctk.CTk):
     def __init__(self, name, width, height):
@@ -41,37 +37,13 @@ class MelodyPlayer(ctk.CTk):
         self.control_container = ctk.CTkFrame(self.navigation_frame, fg_color="#1e1e1e")
         self.control_container.grid(row=1, column=0, sticky="ew", padx=20)
         # Фрейм з прогрес-баром та помітками часу
-        self.progress_frame = ctk.CTkFrame(self.control_container, fg_color="#1e1e1e") 
+        self.progress_frame = ProgressFrame(self.control_container, fg_color="#1e1e1e", audio_player=self.audio_player, playlist=self.playlist, format_duration=MelodyPlayer.format_duration_long) 
         self.progress_frame.grid(row=0, column=0, pady=(0, 30))
-        # Поточний час пісні
-        self.current_time = ctk.CTkLabel(self.progress_frame, text="00:00") 
-        self.current_time.grid(row=0, column=0, sticky="w")
-        # Прогрес-бар
-        self.progress_bar = ctk.CTkProgressBar(self.progress_frame) 
-        self.progress_bar.grid(row=0, column=1, sticky="ew", padx=10)
-        self.progress_bar.set(0)
-        # Загальна тривалість пісні
-        self.total_time = ctk.CTkLabel(self.progress_frame, text="03:45") 
-        self.total_time.grid(row=0, column=2, sticky="e")
-        # Кнопки
-        self.btns_frame = ctk.CTkFrame(self.control_container, fg_color="#1e1e1e")
+        # Фрейм з навігаціними кнопками
+        self.btns_frame = NavigationButtonsFrame(
+            self.control_container, prev_command=self.turn_prev_track, pause_command=self.audio_player.pause, 
+            resume_command=self.resume, next_command=self.turn_next_track, fg_color="#1e1e1e")
         self.btns_frame.grid(row=1, column=0)
-        # Попередня пісня
-        self.prev_img = ctk.CTkImage(Image.open(f"{img_path}/previous.png"), size=(25, 25))
-        self.prev_btn = NavigationButton(self.btns_frame, image=self.prev_img, command=self.turn_prev_track)
-        self.prev_btn.grid(row=0, column=0, sticky="s", padx=10)
-        # Пауза
-        self.pause_img = ctk.CTkImage(Image.open(f"{img_path}/pause.png"), size=(25, 25))
-        self.pause_btn = NavigationButton(self.btns_frame, image=self.pause_img, command=self.audio_player.pause)
-        self.pause_btn.grid(row=0, column=1, sticky="s", padx=10)
-        # Анпауза
-        self.resume_img = ctk.CTkImage(Image.open(f"{img_path}/resume.png"), size=(25, 25))
-        self.resume_btn = NavigationButton(self.btns_frame, image=self.resume_img, command=self.resume)
-        self.resume_btn.grid(row=0, column=2, sticky="s", padx=10)
-        # Наступна пісня
-        self.next_img = ctk.CTkImage(Image.open(f"{img_path}/next.png"), size=(25, 25))
-        self.next_btn = NavigationButton(self.btns_frame, image=self.next_img, command=self.turn_next_track)
-        self.next_btn.grid(row=0, column=3, sticky="s", padx=10)
         # Бокова панель
         self.side_panel = ctk.CTkFrame(self, fg_color="#2b2b2b")
         self.side_panel.pack(side="right", fill="y")
@@ -87,11 +59,10 @@ class MelodyPlayer(ctk.CTk):
         self.filter_btn = ctk.CTkButton(self.side_panel, corner_radius=40, text="Шукати", width=50, command=self.filter_tracks)
         self.filter_btn.grid(row=1, column=2, padx=10)
         # Фрейм зі скролом для спсику пісень
-        self.scrollable_song_list = ctk.CTkScrollableFrame(self.side_panel, fg_color="#2b2b2b")
+        self.scrollable_song_list = ScrollableTrackListFrame(self.side_panel, fg_color="#2b2b2b", track_btn_command=self.choose_track)
         self.scrollable_song_list.grid(row=2, column=0, columnspan=3, pady=(20, 0), sticky="nsew")
-        # Створення масиву кнопок
-        self.track_btns = []
-        self.create_track_btns() # Створення самих кнопок
+        self.scrollable_song_list.create_track_btns(playlist=self.playlist)
+        
     # Функція, яка спрацьовує при натисканні на кнопку треку
     def choose_track(self, ind):
         # Отримуємо потрібні дані
@@ -102,14 +73,9 @@ class MelodyPlayer(ctk.CTk):
         self.info_label.grid(sticky="s")
         self.info_label.configure(text=f"{track.artist} - {track.title}")
         self.navigation_frame.grid(row=1, column=0, sticky="sew", padx=(90,20))
-        self.total_time.configure(text=MelodyPlayer.format_duration_long(track.duration))
+        self.progress_frame.set_time(total_time=MelodyPlayer.format_duration_long(track.duration), current_time="00:00", progress_value=0)
         # Налаштовуємо кнопки навігації
-        self.prev_btn.configure(state="normal", fg_color="#2FA572")
-        self.next_btn.configure(state="normal", fg_color="#2FA572")
-        if ind == total_ind: # Якщо остання пісня, блокуємо кнопку "Наступна"
-            self.next_btn.configure(state="disabled", fg_color="gray")
-        if ind == 1: # Якщо перша пісня, блокуємо кнопку "Попередня"
-            self.prev_btn.configure(state="disabled", fg_color="gray")
+        self.btns_frame.enable_prev_or_next_btns(index=ind, total=total_ind)
         # Запускаємо трек та встановлюємо гучність
         self.audio_player.play_track(track.filepath)
         self.audio_player.set_volume(self.volume_slider.get())
@@ -117,10 +83,8 @@ class MelodyPlayer(ctk.CTk):
         if self.after_id:
             self.after_cancel(self.after_id)
         # Налаштування прогрес_бару
-        self.track_time = 0
-        self.progress_bar.set(0)
-        self.current_time.configure(text="00:00")
-        self.set_progress_bar()
+        self.progress_frame.track_time = 0
+        self.after_id = self.progress_frame.update_progress_bar()
 
     def turn_next_track(self):
         self.playlist["current_track"] += 1
@@ -129,22 +93,13 @@ class MelodyPlayer(ctk.CTk):
     def turn_prev_track(self):
         self.playlist["current_track"] -= 1
         self.choose_track(self.playlist["current_track"])
-    # Функція для роботи з прогрес_баром
-    def set_progress_bar(self):
-        if self.audio_player.is_track_busy(): # Якщо трек грає
-            current_track = self.playlist['current_track']
-            duration = self.playlist["tracks"][current_track].duration
-            ms = self.audio_player.get_track_position()  # мілісекунди
-            self.track_time = ms // 1000 + 1
-            self.progress_bar.set(self.track_time/duration)
-            self.current_time.configure(text=MelodyPlayer.format_duration_long(self.track_time))
-            self.after_id = self.after(1000, self.set_progress_bar)
+    
     # Функція Анпаузи
     def resume(self):
         self.audio_player.resume()
         if self.after_id:
             self.after_cancel(self.after_id)
-        self.set_progress_bar()
+        self.after_id = self.progress_frame.update_progress_bar()
 
     def filter_tracks(self):
         # Налаштували дизайн
@@ -157,24 +112,8 @@ class MelodyPlayer(ctk.CTk):
         track = self.filter_entry_track.get()
         self.playlist = get_playlist(artist, track)
         # Оновимо список кнопок
-        self.destroy_track_btns()
-        self.create_track_btns()
-
-    def create_track_btns(self):
-        if not self.playlist["tracks"]:
-            empty_btns_label = ctk.CTkLabel(self.scrollable_song_list, text="За вашим фільтром нічого не знайдено", font=("Arial", 16))
-            empty_btns_label.pack()
-            self.track_btns.append(empty_btns_label)
-            return
-        for ind, track in self.playlist["tracks"].items():
-            btn = TrackButton(self.scrollable_song_list, text=f"{track.artist} - {track.title}", command= lambda ind =ind: self.choose_track(ind))
-            btn.pack(pady=5)
-            self.track_btns.append(btn)
-
-    def destroy_track_btns(self):
-        for btn in self.track_btns:
-            btn.destroy()
-        self.track_btns.clear()
+        self.scrollable_song_list.destroy_track_btns()
+        self.scrollable_song_list.create_track_btns(playlist=self.playlist)
 
     @staticmethod
     def format_duration_long(duration):
@@ -184,5 +123,3 @@ class MelodyPlayer(ctk.CTk):
         return f"{minutes:02}:{seconds:02}"
 
 app = MelodyPlayer(name="MelodyPlayer", width=900, height=400)        
-
-
