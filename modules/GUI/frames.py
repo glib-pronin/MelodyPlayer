@@ -24,11 +24,11 @@ class ProgressFrame(ctk.CTkFrame):
         self.total_time.grid(row=0, column=2, sticky="e")
 
     def set_time(self, total_time=None, current_time=None, progress_value=None):
-        if total_time is not None:
+        if total_time is not None and self.total_time.winfo_exists():
             self.total_time.configure(text=total_time)
-        if current_time is not None:
+        if current_time is not None and self.current_time.winfo_exists():
             self.current_time.configure(text=current_time)
-        if progress_value is not None:
+        if progress_value is not None and self.progress_bar.winfo_exists():
             self.progress_bar.set(progress_value)
 
 
@@ -71,7 +71,7 @@ class NavigationButtonsFrame(ctk.CTkFrame):
         if index == 1: # Якщо перша пісня, блокуємо кнопку "Попередня"
             self.prev_btn.configure(state="disabled", fg_color="gray")
 
-class ScrollableTrackListFrame(ctk.CTkFrame):
+class ScrollableTrackListFrame(ctk.CTkScrollableFrame):
     def __init__(self, master, fg_color, track_btn_command, **kwargs):
         super().__init__(master,  fg_color=fg_color, **kwargs)
         self.track_btn_command = track_btn_command

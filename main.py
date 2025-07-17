@@ -4,6 +4,7 @@ import customtkinter as ctk
 # Налаштування кольорової теми
 ctk.set_appearance_mode("dark")
 
+
 def main():
     try:
         app.mainloop()
