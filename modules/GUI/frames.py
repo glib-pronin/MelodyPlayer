@@ -36,9 +36,7 @@ class ProgressFrame(ctk.CTkFrame):
     def update_progress_bar(self):
         if self.audio_player.is_track_busy(): # Якщо трек грає
             playlist = self.get_playlist()
-            print(f"FROM FRAME.PY \n{playlist}")
             current_track = playlist['current_track']
-            print(current_track)
             duration = playlist["tracks"][current_track].duration
             ms = self.audio_player.get_track_position()  # мілісекунди
             self.track_time = ms // 1000 + 1
