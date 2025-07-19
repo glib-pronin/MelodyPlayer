@@ -57,12 +57,13 @@ class AddTrackWindow(ctk.CTkToplevel):
         audio = MP3(self.selected_file)
         duration = round(audio.info.length)
         try:
-            # Переміщаємо файл
-            destination = os.path.abspath(__file__+f"/../../../assets/music/{self.select_label.cget('text')}")
-            shutil.move(self.selected_file, destination)
+            # Копіюємо файл файл
+            destination = os.path.abspath(__file__+"/../../../assets/music")
+            os.makedirs(destination, exist_ok=True)
+            shutil.copy(src=self.selected_file, dst=destination)
             # Додаємо в БД
             add_track_to_db(track, artist, self.select_label.cget("text"), duration)
-        except:
+        except Exception as e:
             warn_label = ctk.CTkLabel(self, text="Сталася помилка при додаванні файлу", text_color="red", font=("Arial", 16))
             warn_label.grid(row=0, column=0, columnspan=2, pady=10)
             return
