@@ -38,3 +38,10 @@ def form_response(playlist):
     for ind, track in enumerate(playlist):
         playlist_dict["tracks"][ind+1] = track
     return playlist_dict
+
+def add_track_to_db(title, artist, filename, duration):
+    with Session() as session:
+        track = Track(title=title, artist=artist, filepath=f"assets/music/{filename}", duration=duration)
+        session.add(track)
+        session.commit()
+        

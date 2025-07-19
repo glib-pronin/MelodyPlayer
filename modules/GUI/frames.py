@@ -6,10 +6,10 @@ import os
 img_path = os.path.abspath(__file__+'/../../../assets/img') # Шлях до папки з малюнками
 
 class ProgressFrame(ctk.CTkFrame):
-    def __init__(self, master, fg_color, audio_player, playlist, format_duration, **kwargs):
+    def __init__(self, master, fg_color, audio_player, get_playlist, format_duration, **kwargs):
         super().__init__(master, fg_color=fg_color, **kwargs)
         self.audio_player=audio_player
-        self.playlist=playlist
+        self.get_playlist=get_playlist
         self.format_duration=format_duration
         self.track_time = 0
         # Поточний час пісні
@@ -35,8 +35,11 @@ class ProgressFrame(ctk.CTkFrame):
     # Функція для роботи з прогрес_баром
     def update_progress_bar(self):
         if self.audio_player.is_track_busy(): # Якщо трек грає
-            current_track = self.playlist['current_track']
-            duration = self.playlist["tracks"][current_track].duration
+            playlist = self.get_playlist()
+            print(f"FROM FRAME.PY \n{playlist}")
+            current_track = playlist['current_track']
+            print(current_track)
+            duration = playlist["tracks"][current_track].duration
             ms = self.audio_player.get_track_position()  # мілісекунди
             self.track_time = ms // 1000 + 1
             self.set_time(current_time=self.format_duration(self.track_time), progress_value=self.track_time/duration)
